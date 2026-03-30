@@ -247,3 +247,4 @@ External forwarding only happens when all of these are true:
 - `POLICE_REPORT_WEBHOOK_URL` is configured
 
 That default makes the app safer by keeping a human in the loop unless you intentionally enable automation.
+# police-report-agent
