@@ -1,0 +1,16 @@
+{
+  "reporter_name": "Alex Doe",
+  "reporter_phone": "+971500000000",
+  "reporter_email": "alex@example.com",
+  "incident_country": "United Arab Emirates",
+  "incident_city": "Dubai",
+  "call_received_at": "2026-03-25T14:05:00+04:00",
+  "scam_phone_number": "+971555555555",
+  "suspected_scam_type": "Bank impersonation",
+  "transcript": "The caller said they were from my bank, claimed my account would be frozen, and asked for my OTP code and card details.",
+  "short_notes": "I ended the call and blocked the number.",
+  "money_requested": false,
+  "money_lost_amount": 0,
+  "payment_method": null,
+  "wants_forwarding": false
+}

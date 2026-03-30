@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scam Call Police Reporting Agent</title>
+    <link rel="stylesheet" href="/static/app.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="hero">
+        <p class="eyebrow">Non-emergency intake</p>
+        <h1>Turn a scam call into a clean police report draft.</h1>
+        <p class="hero-copy">
+          Capture what happened, preserve evidence, and generate a structured report
+          you can review before sharing with police or a fraud team.
+        </p>
+        <div class="hero-note">
+          Use emergency services directly if anyone is in immediate danger.
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Scam Call Intake</h2>
+          <p>Fill in what you know. Unknown details can be left blank.</p>
+        </div>
+
+        <form id="report-form" class="report-form">
+          <div class="field-grid">
+            <label>
+              <span>Reporter name</span>
+              <input name="reporter_name" type="text" placeholder="Alex Doe" />
+            </label>
+
+            <label>
+              <span>Reporter phone</span>
+              <input name="reporter_phone" type="tel" placeholder="+971500000000" />
+            </label>
+
+            <label>
+              <span>Reporter email</span>
+              <input name="reporter_email" type="email" placeholder="alex@example.com" />
+            </label>
+
+            <label>
+              <span>Scam phone number</span>
+              <input name="scam_phone_number" type="tel" placeholder="+971555555555" />
+            </label>
+
+            <label>
+              <span>Incident country</span>
+              <input name="incident_country" type="text" placeholder="United Arab Emirates" />
+            </label>
+
+            <label>
+              <span>Incident city</span>
+              <input name="incident_city" type="text" placeholder="Dubai" />
+            </label>
+
+            <label>
+              <span>Call received at</span>
+              <input name="call_received_at" type="datetime-local" />
+            </label>
+
+            <label>
+              <span>Suspected scam type</span>
+              <input name="suspected_scam_type" type="text" placeholder="Bank impersonation" />
+            </label>
+
+            <label>
+              <span>Money lost amount</span>
+              <input name="money_lost_amount" type="number" min="0" step="0.01" placeholder="0" />
+            </label>
+
+            <label>
+              <span>Payment method</span>
+              <input name="payment_method" type="text" placeholder="Bank transfer, gift card, crypto" />
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <label class="checkbox">
+              <input name="money_requested" type="checkbox" />
+              <span>The caller asked for money, passwords, card data, OTPs, or account access</span>
+            </label>
+
+            <label class="checkbox">
+              <input name="wants_forwarding" type="checkbox" />
+              <span>Try forwarding after AI review if auto-forwarding is enabled on the server</span>
+            </label>
+          </div>
+
+          <label>
+            <span>Short notes</span>
+            <textarea
+              name="short_notes"
+              rows="3"
+              placeholder="Blocked the number, contacted the bank, saved screenshots, etc."
+            ></textarea>
+          </label>
+
+          <label>
+            <span>Call transcript or detailed summary</span>
+            <textarea
+              name="transcript"
+              rows="10"
+              required
+              placeholder="Write what the caller said, what they asked for, and how you responded."
+            ></textarea>
+          </label>
+
+          <div class="actions">
+            <button id="submit-button" type="submit">Generate report</button>
+            <p id="status-text" class="status-text">Ready</p>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel panel-results">
+        <div class="panel-head">
+          <h2>Report Output</h2>
+          <p>The generated report will appear here after submission.</p>
+        </div>
+        <div id="result" class="result-empty">No report generated yet.</div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,69 @@
+services:
+  - type: web
+    name: police-report-agent
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: REPORT_STORAGE_DIR
+        value: reports
+      - key: REPORT_LANGUAGE
+        value: ar
+      - key: AUTO_FORWARD_REPORTS
+        value: "false"
+      - key: WEBHOOK_AUTH_HEADER_NAME
+        value: Authorization
+      - key: AUTO_EMAIL_REPORTS
+        value: "true"
+      - key: EMAIL_TO_ADDRESS
+        value: hunterworld@gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USE_TLS
+        value: "true"
+      - key: TWILIO_GATHER_LANGUAGE
+        value: ar-SA
+      - key: TWILIO_AUTO_FORWARD_REPORTS
+        value: "false"
+      - key: TWILIO_VOICE_MODE
+        value: conversation
+      - key: TWILIO_REALTIME_MODEL
+        value: gpt-realtime-mini
+      - key: TWILIO_TRANSCRIPTION_MODEL
+        value: gpt-4o-mini-transcribe
+      - key: TWILIO_AGENT_VOICE
+        value: marin
+      - key: TWILIO_AGENT_LANGUAGE
+        value: ar
+      - key: TWILIO_AGENT_SPEED
+        value: "1.0"
+      - key: WHATSAPP_CHAT_MODEL
+        value: gpt-5.4-mini
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: POLICE_REPORT_WEBHOOK_URL
+        sync: false
+      - key: WEBHOOK_AUTH_HEADER_VALUE
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: TWILIO_AGENT_PHONE_NUMBER
+        sync: false
+      - key: TWILIO_REPORTING_PHONE_NUMBER
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_DEFAULT_COUNTRY
+        sync: false
+      - key: TWILIO_DEFAULT_CITY
+        sync: false
