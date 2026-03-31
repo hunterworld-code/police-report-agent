@@ -28,6 +28,7 @@ class Settings:
     public_base_url: str | None = None
     twilio_agent_phone_number: str | None = None
     twilio_reporting_phone_number: str | None = None
+    twilio_account_sid: str | None = None
     twilio_auth_token: str | None = None
     twilio_default_country: str | None = None
     twilio_default_city: str | None = None
@@ -40,6 +41,9 @@ class Settings:
     twilio_agent_language: str = "ar"
     twilio_agent_speed: float = 1.0
     whatsapp_chat_model: str = "gpt-5.4-mini"
+    auto_whatsapp_reports: bool = False
+    whatsapp_from_number: str | None = None
+    whatsapp_report_to_number: str | None = None
     report_language: str = "ar"
     auto_email_reports: bool = True
     email_to_address: str = "hunterworld@gmail.com"
@@ -63,6 +67,7 @@ def get_settings() -> Settings:
         public_base_url=os.getenv("PUBLIC_BASE_URL") or os.getenv("RENDER_EXTERNAL_URL"),
         twilio_agent_phone_number=os.getenv("TWILIO_AGENT_PHONE_NUMBER"),
         twilio_reporting_phone_number=os.getenv("TWILIO_REPORTING_PHONE_NUMBER"),
+        twilio_account_sid=os.getenv("TWILIO_ACCOUNT_SID"),
         twilio_auth_token=os.getenv("TWILIO_AUTH_TOKEN"),
         twilio_default_country=os.getenv("TWILIO_DEFAULT_COUNTRY"),
         twilio_default_city=os.getenv("TWILIO_DEFAULT_CITY"),
@@ -75,6 +80,9 @@ def get_settings() -> Settings:
         twilio_agent_language=os.getenv("TWILIO_AGENT_LANGUAGE", "ar"),
         twilio_agent_speed=float(os.getenv("TWILIO_AGENT_SPEED", "1.0")),
         whatsapp_chat_model=os.getenv("WHATSAPP_CHAT_MODEL", "gpt-5.4-mini"),
+        auto_whatsapp_reports=_parse_bool(os.getenv("AUTO_WHATSAPP_REPORTS"), default=False),
+        whatsapp_from_number=os.getenv("WHATSAPP_FROM_NUMBER"),
+        whatsapp_report_to_number=os.getenv("WHATSAPP_REPORT_TO_NUMBER"),
         report_language=os.getenv("REPORT_LANGUAGE", "ar"),
         auto_email_reports=_parse_bool(os.getenv("AUTO_EMAIL_REPORTS"), default=True),
         email_to_address=os.getenv("EMAIL_TO_ADDRESS", "hunterworld@gmail.com"),

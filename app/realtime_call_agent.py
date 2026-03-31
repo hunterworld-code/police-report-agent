@@ -17,6 +17,7 @@ from app.config import Settings
 from app.emailer import send_report_email
 from app.forwarder import forward_report
 from app.storage import save_report_bundle
+from app.whatsapp_delivery import send_report_whatsapp
 
 
 logger = logging.getLogger(__name__)
@@ -366,7 +367,8 @@ def save_call_report(settings: Settings, state: CallTranscript) -> Optional[Dict
     paths = save_report_bundle(settings.report_storage_dir, intake_data, report)
     forwarding = forward_report(settings, intake_data, report)
     email = send_report_email(settings, intake_data, report, paths)
-    return {"report": report, "paths": paths, "forwarding": forwarding, "email": email}
+    whatsapp = send_report_whatsapp(settings, intake_data, report, paths)
+    return {"report": report, "paths": paths, "forwarding": forwarding, "email": email, "whatsapp": whatsapp}
 
 
 async def run_conversational_call(websocket: WebSocket, settings: Settings) -> None:

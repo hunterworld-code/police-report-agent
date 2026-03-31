@@ -41,6 +41,7 @@ function renderResult(payload) {
   const report = payload.report;
   const forwarding = payload.forwarding;
   const email = payload.email;
+  const whatsapp = payload.whatsapp;
 
   result.className = "result-card";
   result.innerHTML = `
@@ -107,6 +108,14 @@ function renderResult(payload) {
       <p>${escapeHtml(email.reason)}</p>
       <p><strong>Recipient</strong> <span class="mono">${escapeHtml(email.recipient || "Not configured")}</span></p>
       <p><strong>Sent</strong> ${email.sent ? "Yes" : "No"}</p>
+    </section>
+
+    <section class="result-section">
+      <h3>WhatsApp Delivery</h3>
+      <p>${escapeHtml(whatsapp.reason)}</p>
+      <p><strong>Recipient</strong> <span class="mono">${escapeHtml(whatsapp.recipient || "Not configured")}</span></p>
+      <p><strong>Sent</strong> ${whatsapp.sent ? "Yes" : "No"}</p>
+      <p><strong>Message SID</strong> <span class="mono">${escapeHtml(whatsapp.message_sid || "N/A")}</span></p>
     </section>
 
     <section class="result-section">

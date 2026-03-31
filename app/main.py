@@ -11,7 +11,7 @@ from app.agent import PoliceReportAgent
 from app.config import get_settings
 from app.emailer import send_report_email
 from app.forwarder import forward_report
-from app.schemas import EmailResult, ForwardingResult, ReportFiles, ReportResponse, ScamCallIntake, model_to_dict
+from app.schemas import EmailResult, ForwardingResult, ReportFiles, ReportResponse, ScamCallIntake, WhatsAppResult, model_to_dict
 from app.storage import quote_filename, save_report_bundle
 from app.realtime_call_agent import run_conversational_call
 from app.twilio_voice import (
@@ -26,6 +26,7 @@ from app.twilio_voice import (
     whatsapp_error_twiml,
 )
 from app.whatsapp_agent import handle_whatsapp_message
+from app.whatsapp_delivery import send_report_whatsapp
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -96,7 +97,8 @@ def _generate_report_bundle(settings, intake_data):
     paths = save_report_bundle(settings.report_storage_dir, intake_data, report)
     forwarding = forward_report(settings, intake_data, report)
     email = send_report_email(settings, intake_data, report, paths)
-    return report, paths, forwarding, email
+    whatsapp = send_report_whatsapp(settings, intake_data, report, paths)
+    return report, paths, forwarding, email, whatsapp
 
 
 def _resolve_report_file_path(settings, filename: str) -> Path:
@@ -176,7 +178,7 @@ def create_report(intake: ScamCallIntake) -> ReportResponse:
 
     try:
         intake_data = model_to_dict(intake)
-        report, paths, forwarding, email = _generate_report_bundle(settings, intake_data)
+        report, paths, forwarding, email, whatsapp = _generate_report_bundle(settings, intake_data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except openai.OpenAIError as exc:
@@ -190,6 +192,7 @@ def create_report(intake: ScamCallIntake) -> ReportResponse:
         files=ReportFiles(**paths),
         forwarding=ForwardingResult(**forwarding),
         email=EmailResult(**email),
+        whatsapp=WhatsAppResult(**whatsapp),
         disclaimer=(
             "هذا النظام يُعد مواد بلاغ غير طارئ. يُرجى مراجعة التقرير قبل إرساله، والاتصال بخدمات الطوارئ مباشرة عند وجود خطر فوري."
         ),
@@ -251,7 +254,7 @@ async def twilio_voice_process_speech(request: Request):
     intake_data = build_twilio_intake(form_data, settings)
 
     try:
-        report, paths, _forwarding, _email = _generate_report_bundle(settings, intake_data)
+        report, paths, _forwarding, _email, _whatsapp = _generate_report_bundle(settings, intake_data)
     except ValueError:
         return Response(
             content=error_twiml(

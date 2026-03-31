@@ -330,6 +330,9 @@ class WebRouteTests(unittest.TestCase):
         ), patch(
             "app.realtime_call_agent.send_report_email",
             return_value={"attempted": False, "sent": False, "reason": "off", "recipient": "hunterworld@gmail.com"},
+        ), patch(
+            "app.realtime_call_agent.send_report_whatsapp",
+            return_value={"attempted": False, "sent": False, "reason": "off", "recipient": None, "message_sid": None, "media_url": None},
         ):
             agent_cls.return_value.generate_report.return_value = fake_report
             result = save_call_report(self.settings, state)
@@ -365,10 +368,18 @@ class WebRouteTests(unittest.TestCase):
             "reason": "SMTP settings are incomplete.",
             "recipient": "hunterworld@gmail.com",
         }
+        fake_whatsapp = {
+            "attempted": False,
+            "sent": False,
+            "reason": "WhatsApp delivery settings are incomplete.",
+            "recipient": None,
+            "message_sid": None,
+            "media_url": None,
+        }
 
         with patch("app.main.get_settings", return_value=self.settings), patch(
             "app.main._generate_report_bundle",
-            return_value=(fake_report, fake_paths, fake_forwarding, fake_email),
+            return_value=(fake_report, fake_paths, fake_forwarding, fake_email, fake_whatsapp),
         ):
             response = self.client.post(
                 "/twilio/voice/process-speech",

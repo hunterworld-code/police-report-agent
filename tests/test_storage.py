@@ -1,10 +1,12 @@
 from tempfile import TemporaryDirectory
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from app.config import Settings
 from app.emailer import send_report_email
 from app.forwarder import forward_report
+from app.whatsapp_delivery import send_report_whatsapp
 
 from app.storage import render_markdown, save_report_bundle
 
@@ -97,6 +99,56 @@ class StorageTests(unittest.TestCase):
 
         self.assertFalse(result["sent"])
         self.assertIn("SMTP settings are incomplete", result["reason"])
+
+    def test_whatsapp_returns_not_configured_when_settings_missing(self) -> None:
+        settings = Settings(
+            openai_api_key="test-key",
+            openai_model="gpt-5.4-mini",
+            police_report_webhook_url=None,
+            auto_forward_reports=False,
+            webhook_auth_header_name=None,
+            webhook_auth_header_value=None,
+            report_storage_dir=Path("reports"),
+            auto_whatsapp_reports=True,
+            twilio_account_sid=None,
+            twilio_auth_token=None,
+            whatsapp_from_number=None,
+            whatsapp_report_to_number=None,
+        )
+
+        with TemporaryDirectory() as tmp_dir:
+            paths = save_report_bundle(Path(tmp_dir), INTAKE, REPORT)
+            result = send_report_whatsapp(settings, INTAKE, REPORT, paths)
+
+        self.assertFalse(result["sent"])
+        self.assertIn("settings are incomplete", result["reason"])
+
+    def test_whatsapp_send_uses_twilio_client(self) -> None:
+        settings = Settings(
+            openai_api_key="test-key",
+            openai_model="gpt-5.4-mini",
+            police_report_webhook_url=None,
+            auto_forward_reports=False,
+            webhook_auth_header_name=None,
+            webhook_auth_header_value=None,
+            report_storage_dir=Path("reports"),
+            public_base_url="https://police-report-agent.onrender.com",
+            twilio_account_sid="AC123",
+            twilio_auth_token="auth",
+            auto_whatsapp_reports=True,
+            whatsapp_from_number="whatsapp:+14155238886",
+            whatsapp_report_to_number="whatsapp:+971509992377",
+        )
+
+        with TemporaryDirectory() as tmp_dir:
+            paths = save_report_bundle(Path(tmp_dir), INTAKE, REPORT)
+            with patch("app.whatsapp_delivery.Client") as client_cls:
+                client_cls.return_value.messages.create.return_value.sid = "SM999"
+                result = send_report_whatsapp(settings, INTAKE, REPORT, paths)
+
+        self.assertTrue(result["sent"])
+        self.assertEqual(result["recipient"], "whatsapp:+971509992377")
+        self.assertEqual(result["message_sid"], "SM999")
 
 
 if __name__ == "__main__":

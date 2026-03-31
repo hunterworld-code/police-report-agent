@@ -52,6 +52,7 @@ SMTP_USE_TLS=true
 PUBLIC_BASE_URL=
 TWILIO_AGENT_PHONE_NUMBER=
 TWILIO_REPORTING_PHONE_NUMBER=
+TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_DEFAULT_COUNTRY=
 TWILIO_DEFAULT_CITY=
@@ -64,6 +65,9 @@ TWILIO_AGENT_VOICE=marin
 TWILIO_AGENT_LANGUAGE=ar
 TWILIO_AGENT_SPEED=1.0
 WHATSAPP_CHAT_MODEL=gpt-5.4-mini
+AUTO_WHATSAPP_REPORTS=false
+WHATSAPP_FROM_NUMBER=whatsapp:+14155238886
+WHATSAPP_REPORT_TO_NUMBER=whatsapp:+971509992377
 ```
 
 ## Run
@@ -237,6 +241,23 @@ The email includes:
 - The generated PDF report as an attachment
 - The generated Markdown report as an attachment
 - The JSON report bundle as an attachment
+
+## WhatsApp delivery
+
+If you want every finished report to be copied to WhatsApp automatically, configure these fields:
+
+```env
+AUTO_WHATSAPP_REPORTS=true
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+WHATSAPP_FROM_NUMBER=whatsapp:+14155238886
+WHATSAPP_REPORT_TO_NUMBER=whatsapp:+971509992377
+```
+
+With those settings, the app will send:
+
+- A short Arabic WhatsApp summary
+- The report PDF as a WhatsApp media attachment when a public report URL is available
 
 ## Forwarding behavior
 

@@ -38,9 +38,19 @@ class EmailResult(BaseModel):
     recipient: Optional[str] = None
 
 
+class WhatsAppResult(BaseModel):
+    attempted: bool
+    sent: bool
+    reason: str
+    recipient: Optional[str] = None
+    message_sid: Optional[str] = None
+    media_url: Optional[str] = None
+
+
 class ReportFiles(BaseModel):
     json_path: str
     markdown_path: str
+    pdf_path: Optional[str] = None
 
 
 class ReportResponse(BaseModel):
@@ -48,6 +58,7 @@ class ReportResponse(BaseModel):
     files: ReportFiles
     forwarding: ForwardingResult
     email: EmailResult
+    whatsapp: WhatsAppResult
     reviewed_by_ai: bool = True
     disclaimer: str
 
