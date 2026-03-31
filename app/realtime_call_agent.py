@@ -410,9 +410,22 @@ async def run_conversational_call(websocket: WebSocket, settings: Settings) -> N
 
         if state.has_caller_content():
             try:
-                await asyncio.to_thread(save_call_report, settings, state)
+                logger.info(
+                    "Saving conversational call report for call %s with %d transcript turns",
+                    state.call_sid,
+                    len(state.turns),
+                )
+                result = await asyncio.to_thread(save_call_report, settings, state)
+                if result:
+                    logger.info(
+                        "Saved conversational call report for call %s to %s",
+                        state.call_sid,
+                        result["paths"]["json_path"],
+                    )
             except Exception:
                 logger.exception("Failed to save conversational call report for call %s", state.call_sid)
+        else:
+            logger.info("No caller transcript captured for call %s; skipping report save", state.call_sid)
 
 
 async def _relay_twilio_to_openai(
@@ -507,4 +520,8 @@ async def _relay_openai_to_twilio(
                 runtime.response_active = False
                 await websocket.send_text(json.dumps({"event": "clear", "streamSid": state.stream_sid}))
         elif event.type == "error":
-            logger.warning("Realtime API error during call %s: %s", state.call_sid, event.error)
+            error_code = getattr(event.error, "code", None)
+            if error_code == "response_cancel_not_active":
+                logger.debug("Ignoring non-fatal realtime cancel warning for call %s", state.call_sid)
+            else:
+                logger.warning("Realtime API error during call %s: %s", state.call_sid, event.error)
