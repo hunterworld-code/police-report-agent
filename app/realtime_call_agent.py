@@ -120,6 +120,15 @@ class CallTranscript:
     def has_caller_content(self) -> bool:
         return any(turn["role"] == "caller" for turn in self.turns)
 
+    def has_reportable_data(self) -> bool:
+        return bool(
+            self.turns
+            or self.call_sid
+            or self.stream_sid
+            or self.caller_number
+            or self.called_number
+        )
+
     def transcript_text(self) -> str:
         return "\n".join(f"{turn['role'].title()}: {turn['text']}" for turn in self.turns)
 
@@ -298,7 +307,14 @@ def _infer_scam_type(transcript: str) -> str:
 
 
 def build_report_intake_from_call(state: CallTranscript, settings: Settings) -> Dict[str, object]:
-    transcript = state.transcript_text()
+    transcript = state.transcript_text().strip()
+    partial_report = False
+    if not transcript:
+        partial_report = True
+        transcript = (
+            "تم إغلاق المكالمة قبل اكتمال جمع التفاصيل. "
+            "لم يتم التقاط نص واضح من المتصل، ولذلك أُعد هذا البلاغ الجزئي استناداً إلى بيانات الاتصال المتاحة فقط."
+        )
     detected_numbers = _extract_phone_numbers(transcript)
     if state.line_role == "reporting":
         scam_phone_number = detected_numbers[0] if detected_numbers else None
@@ -319,6 +335,8 @@ def build_report_intake_from_call(state: CallTranscript, settings: Settings) -> 
         notes.append(f"Twilio called number: {state.called_number}")
     if scam_phone_number:
         notes.append(f"Suspected caller number: {scam_phone_number}")
+    if partial_report:
+        notes.append("Call ended before full information capture; report created from partial call data.")
 
     return {
         "reporter_name": reporter_name,
@@ -339,7 +357,7 @@ def build_report_intake_from_call(state: CallTranscript, settings: Settings) -> 
 
 
 def save_call_report(settings: Settings, state: CallTranscript) -> Optional[Dict[str, object]]:
-    if not state.has_caller_content():
+    if not state.has_reportable_data():
         return None
 
     intake_data = build_report_intake_from_call(state, settings)
@@ -426,7 +444,7 @@ async def run_conversational_call(websocket: WebSocket, settings: Settings) -> N
         except Exception:
             pass
 
-        if state.has_caller_content():
+        if state.has_reportable_data():
             try:
                 logger.info(
                     "Saving conversational call report for call %s with %d transcript turns",
@@ -443,7 +461,7 @@ async def run_conversational_call(websocket: WebSocket, settings: Settings) -> N
             except Exception:
                 logger.exception("Failed to save conversational call report for call %s", state.call_sid)
         else:
-            logger.info("No caller transcript captured for call %s; skipping report save", state.call_sid)
+            logger.info("No reportable call data captured for call %s; skipping report save", state.call_sid)
 
 
 async def _relay_twilio_to_openai(

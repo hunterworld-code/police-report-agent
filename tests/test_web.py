@@ -12,6 +12,7 @@ from app.main import app
 from app.realtime_call_agent import (
     CallTranscript,
     build_report_intake_from_call,
+    save_call_report,
     build_stream_url,
     build_voice_agent_prompt,
     resolve_voice_line_role,
@@ -240,6 +241,66 @@ class WebRouteTests(unittest.TestCase):
         self.assertIsNone(intake["reporter_name"])
         self.assertEqual(intake["reporter_phone"], "+15550002222")
         self.assertEqual(intake["scam_phone_number"], "+15556667777")
+
+    def test_build_report_intake_from_call_uses_partial_fallback_when_no_transcript(self) -> None:
+        state = CallTranscript(
+            call_sid="CA789",
+            stream_sid="MZ789",
+            caller_number="+15550003333",
+            called_number="+15550008888",
+            line_role="reporting",
+        )
+
+        intake = build_report_intake_from_call(state, self.settings)
+
+        self.assertIn("تم إغلاق المكالمة قبل اكتمال جمع التفاصيل", intake["transcript"])
+        self.assertIn("partial call data", intake["short_notes"])
+
+    def test_save_call_report_can_create_partial_report_from_call_metadata(self) -> None:
+        state = CallTranscript(
+            call_sid="CA999",
+            stream_sid="MZ999",
+            caller_number="+15550004444",
+            called_number="+15550008888",
+            line_role="reporting",
+        )
+        fake_report = {
+            "case_title": "بلاغ جزئي",
+            "incident_summary": "تم إنشاء البلاغ من بيانات مكالمة جزئية.",
+            "suspected_scam_type": "بلاغ احتيال هاتفي جزئي",
+            "threat_level": "low",
+            "should_report_to_police": True,
+            "confidence": 0.6,
+            "recommended_reporting_channel": "شرطة دبي",
+            "timeline": [],
+            "people_and_numbers": [],
+            "requested_money_or_data": [],
+            "evidence_to_preserve": [],
+            "recommended_next_steps": [],
+            "police_narrative": "ملخص جزئي",
+            "victim_impact": "غير معروف",
+            "legal_caution": "مبني على بيانات جزئية",
+        }
+
+        with patch("app.realtime_call_agent.PoliceReportAgent") as agent_cls, patch(
+            "app.realtime_call_agent.save_report_bundle",
+            return_value={
+                "json_path": "/tmp/report.json",
+                "markdown_path": "/tmp/report.md",
+                "pdf_path": "/tmp/report.pdf",
+            },
+        ), patch(
+            "app.realtime_call_agent.forward_report",
+            return_value={"attempted": False, "sent": False, "reason": "off", "destination": None, "status_code": None},
+        ), patch(
+            "app.realtime_call_agent.send_report_email",
+            return_value={"attempted": False, "sent": False, "reason": "off", "recipient": "hunterworld@gmail.com"},
+        ):
+            agent_cls.return_value.generate_report.return_value = fake_report
+            result = save_call_report(self.settings, state)
+
+        self.assertIsNotNone(result)
+        agent_cls.return_value.generate_report.assert_called_once()
 
     def test_twilio_process_speech_generates_report_response(self) -> None:
         fake_report = {
