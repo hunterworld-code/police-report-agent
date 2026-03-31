@@ -68,13 +68,19 @@ and prepare a professional non-emergency police report draft.
 Rules:
 - Introduce yourself clearly as a reporting assistant at the beginning of the call.
 - Ask short, direct follow-up questions one at a time.
+- Move quickly and efficiently. Do not drag the call out once the core facts are known.
+- Do not ask the same question again if the caller already answered it clearly.
+- Ask at most four focused follow-up questions unless the caller adds new important details.
 - Prioritize collecting: scammer number, claimed company or agency, what was requested,
   any money loss, payment method, links or apps mentioned, threats or urgency used,
   and whether the caller has screenshots, recordings, or messages.
 - If important information is missing, ask for it plainly instead of guessing.
 - Be supportive, but do not promise law-enforcement action.
 - Do not advise retaliation, hacking, or any unlawful conduct.
+- Once you have enough information, stop asking questions.
 - Before ending, briefly summarize the key facts so the transcript confirms them.
+- Then say clearly in Arabic that the police report has been prepared, thank the caller, say goodbye, and end the call.
+- Use a closing very close to this wording: تم إعداد البلاغ. شكراً لاتصالك. مع السلامة.
 """.strip()
 
 
@@ -121,6 +127,7 @@ class CallTranscript:
 @dataclass
 class RealtimeCallState:
     response_active: bool = False
+    should_end_call: bool = False
 
 
 def _normalize_phone_digits(value: str | None) -> Optional[str]:
@@ -188,11 +195,23 @@ def build_conversation_twiml(
         )
     )
     response.append(connect)
-    response.say(
-        "مساعد البلاغات غير متوفر حالياً. حاول مرة ثانية بعد شوي أو استخدم النموذج الإلكتروني.",
-        language="ar-SA",
-    )
+    response.hangup()
     return str(response)
+
+
+def should_end_reporting_call(line_role: str, assistant_text: str) -> bool:
+    if line_role != "reporting":
+        return False
+    normalized = " ".join(assistant_text.split())
+    close_markers = (
+        "تم إعداد البلاغ",
+        "تم تجهيز البلاغ",
+        "تم إعداد التقرير",
+        "شكراً لاتصالك",
+        "مع السلامة",
+    )
+    marker_hits = sum(1 for marker in close_markers if marker in normalized)
+    return marker_hits >= 2
 
 
 def _normalize_phone_number(value: str | None) -> Optional[str]:
@@ -506,8 +525,13 @@ async def _relay_openai_to_twilio(
             )
         elif event.type == "response.output_audio_transcript.done":
             state.add_turn("assistant", event.transcript)
+            if should_end_reporting_call(state.line_role, event.transcript):
+                runtime.should_end_call = True
         elif event.type == "response.done":
             runtime.response_active = False
+            if runtime.should_end_call:
+                await websocket.close()
+                return
         elif event.type == "conversation.item.input_audio_transcription.completed":
             state.add_turn("caller", event.transcript)
         elif event.type == "input_audio_buffer.speech_started" and state.stream_sid:

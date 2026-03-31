@@ -15,6 +15,7 @@ from app.realtime_call_agent import (
     build_stream_url,
     build_voice_agent_prompt,
     resolve_voice_line_role,
+    should_end_reporting_call,
 )
 
 
@@ -138,6 +139,16 @@ class WebRouteTests(unittest.TestCase):
     def test_reporting_prompt_is_transparent(self) -> None:
         self.assertIn("transparent scam reporting assistant", build_voice_agent_prompt("reporting"))
         self.assertIn("formal Emirati male tone", build_voice_agent_prompt("reporting"))
+
+    def test_reporting_call_end_detection_matches_final_confirmation(self) -> None:
+        self.assertTrue(
+            should_end_reporting_call(
+                "reporting",
+                "تم إعداد البلاغ. شكراً لاتصالك. مع السلامة.",
+            )
+        )
+        self.assertFalse(should_end_reporting_call("reporting", "تفضل، خبرني شو صار."))
+        self.assertFalse(should_end_reporting_call("scam_bait", "تم إعداد البلاغ. شكراً لاتصالك."))
 
     def test_twilio_incoming_returns_error_when_public_url_missing(self) -> None:
         broken_settings = Settings(
