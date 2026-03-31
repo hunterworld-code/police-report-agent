@@ -47,6 +47,11 @@ def home() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/reports/archive", include_in_schema=False)
+def reports_archive() -> FileResponse:
+    return FileResponse(STATIC_DIR / "reports.html")
+
+
 def _friendly_openai_error(exc: Exception) -> tuple[int, str]:
     if isinstance(exc, openai.AuthenticationError):
         return (
@@ -102,6 +107,53 @@ def _resolve_report_file_path(settings, filename: str) -> Path:
     return file_path
 
 
+def _read_report_title(markdown_path: Path) -> str | None:
+    try:
+        first_line = markdown_path.read_text(encoding="utf-8").splitlines()[0].strip()
+    except Exception:
+        return None
+    if first_line.startswith("# "):
+        return first_line[2:].strip() or None
+    return None
+
+
+def _list_saved_reports(settings) -> list[dict]:
+    storage_dir = settings.report_storage_dir
+    if not storage_dir.exists():
+        return []
+
+    reports: dict[str, dict] = {}
+    for file_path in storage_dir.iterdir():
+        if not file_path.is_file() or file_path.suffix.lower() not in {".pdf", ".md", ".json"}:
+            continue
+        report_id = file_path.stem
+        entry = reports.setdefault(
+            report_id,
+            {
+                "id": report_id,
+                "title": None,
+                "updated_at": file_path.stat().st_mtime,
+                "files": {"pdf": None, "markdown": None, "json": None},
+            },
+        )
+        entry["updated_at"] = max(entry["updated_at"], file_path.stat().st_mtime)
+        file_url = f"/reports/files/{quote_filename(file_path.name)}"
+        if file_path.suffix.lower() == ".pdf":
+            entry["files"]["pdf"] = file_url
+        elif file_path.suffix.lower() == ".md":
+            entry["files"]["markdown"] = file_url
+            entry["title"] = entry["title"] or _read_report_title(file_path)
+        elif file_path.suffix.lower() == ".json":
+            entry["files"]["json"] = file_url
+
+    ordered = sorted(reports.values(), key=lambda item: item["updated_at"], reverse=True)
+    for item in ordered:
+        item["updated_at"] = str(item["updated_at"])
+        if not item["title"]:
+            item["title"] = item["id"]
+    return ordered
+
+
 @app.get("/health")
 def health() -> dict:
     settings = get_settings()
@@ -142,6 +194,16 @@ def create_report(intake: ScamCallIntake) -> ReportResponse:
             "هذا النظام يُعد مواد بلاغ غير طارئ. يُرجى مراجعة التقرير قبل إرساله، والاتصال بخدمات الطوارئ مباشرة عند وجود خطر فوري."
         ),
     )
+
+
+@app.get("/reports/list")
+def list_reports() -> dict:
+    settings = get_settings()
+    reports = _list_saved_reports(settings)
+    return {
+        "count": len(reports),
+        "reports": reports,
+    }
 
 
 @app.get("/reports/files/{filename}", include_in_schema=False)

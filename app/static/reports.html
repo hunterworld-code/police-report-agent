@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Saved Reports</title>
+    <link rel="stylesheet" href="/static/app.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="hero">
+        <p class="eyebrow">Saved reports</p>
+        <h1>Browse all reports saved on this server.</h1>
+        <p class="hero-copy">
+          This page shows the reports currently stored on the running system, with direct links to PDF, Markdown, and JSON files.
+        </p>
+        <div class="hero-note">
+          Reports saved on Render live on the Render server. They are separate from files on your laptop.
+        </div>
+      </section>
+
+      <section class="panel panel-results">
+        <div class="panel-head">
+          <h2>Report Archive</h2>
+          <p>Newest reports appear first.</p>
+        </div>
+        <div id="archive-status" class="status-text">Loading reports...</div>
+        <div id="archive-list" class="result-empty">No reports loaded yet.</div>
+      </section>
+    </main>
+
+    <script src="/static/reports.js"></script>
+  </body>
+</html>

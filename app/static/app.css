@@ -85,6 +85,20 @@ body::before {
   font-size: 0.92rem;
 }
 
+.hero-link {
+  margin: 18px 0 0;
+}
+
+.hero-link a {
+  color: var(--accent-dark);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.hero-link a:hover {
+  text-decoration: underline;
+}
+
 .panel {
   position: relative;
   overflow: hidden;
@@ -254,6 +268,52 @@ button:disabled {
   display: grid;
   gap: 18px;
   animation: rise 260ms ease;
+}
+
+.archive-list {
+  display: grid;
+  gap: 16px;
+}
+
+.archive-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.archive-card h3 {
+  margin: 0 0 10px;
+  font-family: "Iowan Old Style", "Palatino Linotype", serif;
+  font-size: 1.2rem;
+}
+
+.archive-meta {
+  margin: 6px 0;
+  color: var(--muted);
+}
+
+.archive-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.archive-links a,
+.archive-missing {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 250, 241, 0.9);
+  color: var(--accent-dark);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.archive-links a:hover {
+  text-decoration: underline;
 }
 
 .result-summary {

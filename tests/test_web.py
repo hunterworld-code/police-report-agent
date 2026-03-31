@@ -56,6 +56,13 @@ class WebRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Scam Call Intake", response.text)
 
+    def test_reports_archive_page_serves_html(self) -> None:
+        response = self.client.get("/reports/archive")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/html", response.headers["content-type"])
+        self.assertIn("Browse all reports saved on this server", response.text)
+
     def test_public_report_file_route_serves_pdf(self) -> None:
         with TemporaryDirectory() as tmp_dir:
             storage_dir = Path(tmp_dir)
@@ -79,6 +86,34 @@ class WebRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("application/pdf", response.headers["content-type"])
+
+    def test_reports_list_returns_saved_report_links(self) -> None:
+        with TemporaryDirectory() as tmp_dir:
+            storage_dir = Path(tmp_dir)
+            (storage_dir / "sample.md").write_text("# تقرير اختباري\n", encoding="utf-8")
+            (storage_dir / "sample.pdf").write_bytes(b"%PDF-1.4\n%test\n")
+            (storage_dir / "sample.json").write_text("{}", encoding="utf-8")
+            settings = Settings(
+                openai_api_key="test-key",
+                openai_model="gpt-5.4-mini",
+                police_report_webhook_url=None,
+                auto_forward_reports=False,
+                webhook_auth_header_name=None,
+                webhook_auth_header_value=None,
+                report_storage_dir=storage_dir,
+                public_base_url="https://example.ngrok-free.app",
+                twilio_agent_phone_number="+15550009999",
+                twilio_reporting_phone_number="+15550008888",
+            )
+
+            with patch("app.main.get_settings", return_value=settings):
+                response = self.client.get("/reports/list")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["count"], 1)
+        self.assertEqual(payload["reports"][0]["title"], "تقرير اختباري")
+        self.assertEqual(payload["reports"][0]["files"]["pdf"], "/reports/files/sample.pdf")
 
     def test_twilio_incoming_returns_voice_twiml(self) -> None:
         with patch("app.main.get_settings", return_value=self.settings):
