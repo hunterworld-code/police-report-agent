@@ -178,7 +178,6 @@ def build_conversation_twiml(
     from twilio.twiml.voice_response import Connect, VoiceResponse
 
     response = VoiceResponse()
-    response.say("لحظة لو سمحت، بخليك مع مساعد البلاغات.", language="ar-SA")
     connect = Connect()
     connect.stream(
         url=build_stream_url(
