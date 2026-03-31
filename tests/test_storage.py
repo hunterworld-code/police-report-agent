@@ -8,7 +8,7 @@ from app.emailer import send_report_email
 from app.forwarder import forward_report
 from app.whatsapp_delivery import send_report_whatsapp
 
-from app.storage import render_markdown, save_report_bundle
+from app.storage import _shape_for_pdf, _transcript_html, render_markdown, save_report_bundle
 
 
 INTAKE = {
@@ -55,6 +55,16 @@ class StorageTests(unittest.TestCase):
             self.assertTrue(Path(result["json_path"]).exists())
             self.assertTrue(Path(result["markdown_path"]).exists())
             self.assertTrue(Path(result["pdf_path"]).exists())
+
+    def test_transcript_html_shapes_arabic_dialogue_lines(self) -> None:
+        transcript = "Assistant: السلام عليكم\nCaller: البنك يطلب الرمز"
+
+        html = _transcript_html(transcript)
+
+        self.assertIn("Assistant:", html)
+        self.assertIn("Caller:", html)
+        self.assertIn(_shape_for_pdf("السلام عليكم"), html)
+        self.assertIn(_shape_for_pdf("البنك يطلب الرمز"), html)
 
     def test_forwarding_requires_positive_ai_recommendation(self) -> None:
         settings = Settings(

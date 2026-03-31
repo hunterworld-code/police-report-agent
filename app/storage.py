@@ -66,6 +66,27 @@ def _paragraph_html(text: str) -> str:
     return "<br/>".join(lines) if lines else "&nbsp;"
 
 
+def _transcript_html(text: str) -> str:
+    rendered_lines: list[str] = []
+    for raw_line in text.splitlines():
+        if not raw_line.strip():
+            continue
+        speaker, separator, remainder = raw_line.partition(":")
+        if separator:
+            speaker_html = escape(f"{speaker}{separator}")
+            remainder_text = remainder.lstrip()
+            if _contains_arabic(remainder_text):
+                shaped_remainder = escape(_shape_for_pdf(remainder_text))
+            else:
+                shaped_remainder = escape(remainder_text)
+            rendered_lines.append(f"{speaker_html} {shaped_remainder}".rstrip())
+            continue
+
+        rendered_lines.append(escape(_shape_for_pdf(raw_line) if _contains_arabic(raw_line) else raw_line))
+
+    return "<br/>".join(rendered_lines) if rendered_lines else "&nbsp;"
+
+
 def _section_items(intake: Dict[str, Any], report: Dict[str, Any]) -> list[tuple[str, list[str], bool]]:
     return [
         (
@@ -203,12 +224,15 @@ def render_pdf(output_path: Path, intake: Dict[str, Any], report: Dict[str, Any]
         fontName=font_name,
         fontSize=9.5,
         leading=13,
-        alignment=TA_LEFT,
+        alignment=TA_RIGHT,
     )
 
     def add_paragraph(story: list, text: str, style: ParagraphStyle, transcript: bool = False) -> None:
-        content = text if transcript else _shape_for_pdf(text)
-        story.append(Paragraph(_paragraph_html(content), style))
+        if transcript:
+            html = _transcript_html(text)
+        else:
+            html = _paragraph_html(_shape_for_pdf(text))
+        story.append(Paragraph(html, style))
         story.append(Spacer(1, 4))
 
     story = []
